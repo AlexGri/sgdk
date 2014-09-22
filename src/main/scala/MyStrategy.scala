@@ -51,15 +51,96 @@ object MyStrategy {
   val upperZone = subzones((2,1))
   val centerZone = subzones((3, 1))
   val lowerZone = subzones((3, 1))
-   val targetUpperZone = new Zone(382.5, 491.25, 274.0, 398.0)
-   val uZone1 = new Zone(491.25, 600d, 250d, 440d)
-   val uZone2 = new Zone(600d, 900d, 200d, 490d)
-   val targetLowerZone = new Zone(400d, 500d, 530d, 620d)
+
+  val leftGlobalUp = new Zone(65d, 1135d, 150d, 460d)
+  val leftGlobalBottom = new Zone(65d, 1135d, 460d, 770d)
+  val rightGlobalUp = new Zone(65d, 1135d, 150d, 460d)
+  val rightGlobalBottom = new Zone(65d, 1135d, 460d, 770d)
+
+  private lazy val leftTopZoneStart = new Zone(600d, 900d, 200d, 490d)
+  private lazy val leftTopZoneMiddle = new Zone(491.25, 600d, 210d, 400d)
+  private lazy val leftTopZoneFinish = new Zone(382.5, 491.25, 274.0, 398.0, true)
+
+  private lazy val leftBottomZoneStart = new Zone(600d, 900d, 430d, 720d)
+  private lazy val leftBottomZoneMiddle = new Zone(491.25, 600d, 520d, 710d)
+  private lazy val leftBottomZoneFinish = new Zone(382.5, 491.25, 522d, 646.0, true)
+
+  private lazy val leftTopZone = new Zone(65d, 491.25, 150d, 460d)
+  private lazy val leftTopStrikeable = new Zone(260d, 491.25, 150d, 460d, true)
+  private lazy val leftBottomZone = new Zone(65d, 491.25, 460d, 770d)
+  private lazy val leftBottomStrikeable = new Zone(260d, 491.25, 460d, 770d, true)
+
+  private def rightMirror(z:Zone) = new Zone(1200 - z.right, 1200 - z.left, z.top, z.bottom)
+
+  private lazy val rightTopZoneStart = rightMirror(leftTopZoneStart)
+  private lazy val rightTopZoneMiddle = rightMirror(leftTopZoneMiddle)
+  private lazy val rightTopZoneFinish = rightMirror(leftTopZoneFinish)
+
+  private lazy val rightBottomZoneStart = rightMirror(leftBottomZoneStart)
+  private lazy val rightBottomZoneMiddle = rightMirror(leftBottomZoneMiddle)
+  private lazy val rightBottomZoneFinish = rightMirror(leftBottomZoneFinish)
+
+  private lazy val rightTopZone = rightMirror(leftTopZone)
+  private lazy val rightTopStrikeable = rightMirror(leftTopStrikeable)
+  private lazy val rightBottomZone = rightMirror(leftBottomZone)
+  private lazy val rightBottomStrikeable = rightMirror(leftBottomStrikeable)
+
+  def topZoneStart(enemyAtLeft:Boolean) = if (enemyAtLeft) leftTopZoneStart else rightTopZoneStart
+  def topZoneMiddle(enemyAtLeft:Boolean) = if (enemyAtLeft) leftTopZoneMiddle else rightTopZoneMiddle
+  def topZoneFinish(enemyAtLeft:Boolean) = if (enemyAtLeft) leftTopZoneFinish else rightTopZoneFinish
+  def bottomZoneStart(enemyAtLeft:Boolean) = if (enemyAtLeft) leftBottomZoneStart else rightBottomZoneStart
+  def bottomZoneMiddle(enemyAtLeft:Boolean) = if (enemyAtLeft) leftBottomZoneMiddle else rightBottomZoneMiddle
+  def bottomZoneFinish(enemyAtLeft:Boolean) = if (enemyAtLeft) leftBottomZoneFinish else rightBottomZoneFinish
+  def topZone(enemyAtLeft:Boolean) = if (enemyAtLeft) leftTopZone else rightTopZone
+  def topStrikeable(enemyAtLeft:Boolean) = if (enemyAtLeft) leftTopStrikeable else rightTopStrikeable
+  def bottomZone(enemyAtLeft:Boolean) = if (enemyAtLeft) leftBottomZone else rightBottomZone
+  def bottomStrikeable(enemyAtLeft:Boolean) = if (enemyAtLeft) leftBottomStrikeable else rightBottomStrikeable
+
+  def globalUp(enemyAtLeft:Boolean) = if (enemyAtLeft) leftGlobalUp else rightGlobalUp
+  def globalBottom(enemyAtLeft:Boolean) = if (enemyAtLeft) leftGlobalBottom else rightGlobalBottom  
+  ////
+  leftGlobalUp.neighbours= List(leftTopStrikeable, leftBottomZoneStart)
+  leftGlobalBottom.neighbours= List(leftBottomStrikeable, leftTopZoneStart)
+
+  leftTopZoneStart.neighbours= List(leftTopZoneMiddle, leftBottomZoneStart)
+  leftTopZoneMiddle.neighbours= List(leftTopZoneFinish)
+
+  leftBottomZoneStart.neighbours= List(leftBottomZoneMiddle, leftTopZoneStart)
+  leftBottomZoneMiddle.neighbours= List(leftBottomZoneFinish)
+
+  leftTopZone.neighbours= List(leftBottomZone, leftTopZoneStart)
+  leftTopStrikeable.neighbours= List(leftTopZone)
+
+  leftBottomZone.neighbours= List(leftTopZone, leftBottomZoneStart)
+  leftBottomStrikeable.neighbours= List(leftBottomZone)
+  
+  ////
+
+  rightGlobalUp.neighbours= List(rightTopStrikeable, rightBottomZoneStart)
+  rightGlobalBottom.neighbours= List(rightBottomStrikeable, rightTopZoneStart)
+
+  rightTopZoneStart.neighbours= List(rightTopZoneMiddle, rightBottomZoneStart)
+  rightTopZoneMiddle.neighbours= List(rightTopZoneFinish)
+
+  rightBottomZoneStart.neighbours= List(rightBottomZoneMiddle, rightTopZoneStart)
+  rightBottomZoneMiddle.neighbours= List(rightBottomZoneFinish)
+
+  rightTopZone.neighbours= List(rightBottomZone, rightTopZoneStart)
+  rightTopStrikeable.neighbours= List(rightTopZone)
+
+  rightBottomZone.neighbours= List(rightTopZone, rightBottomZoneStart)
+  rightBottomStrikeable.neighbours= List(rightBottomZone)
+
+
+  val defenceLeftNet = new Zone(130d, 230d, 430d, 490d)
+  val defenceRightNet = rightMirror(defenceLeftNet)//new Zone(1030d, 1090d, 430d, 490d)
+  //val defenceLeftNet = rightMirror(defenceRightNet)
+
+  def defence(enemyAtLeft:Boolean) = if (enemyAtLeft) defenceRightNet else defenceLeftNet
+   //val targetLowerZone = new Zone(400d, 500d, 530d, 620d)
   val defence1 = new Zone(1165d, 1125d, 370d, 430d)
-  val defence2 = new Zone(1030d, 1090d, 430d, 490d)
   val defence3 = new Zone(1165d, 1125d, 490d, 550d)
-  val globalUp = new Zone(65d, 1135d, 150d, 460d)
-  val globalBottom = new Zone(65d, 1135d, 461d, 770d)
+
   //println(subzones)
 }
 
@@ -80,7 +161,9 @@ trait Rectangle {
   override def toString: String = s"($left, $right, $top, $bottom)"
 }
 
-class Zone(val left: Double, val right : Double, val top:Double, val bottom:Double) extends Rectangle {
+class Zone(val left: Double, val right : Double, val top:Double, val bottom:Double,
+           /*neighbours: => List[Zone] = List.empty,*/ strikeable:Boolean = false) extends Rectangle {
+  var neighbours: List[Zone] = List.empty
   def divide(xSides:Int, ySides:Int):Map[(Int, Int), Zone] = {
     val xLength = (right - left) / xSides
     val yLength = (bottom - top) / ySides
@@ -93,12 +176,22 @@ class Zone(val left: Double, val right : Double, val top:Double, val bottom:Doub
     val yOffset = topZoneNum*topSize
     new Zone (left + xOffset, left+xOffset+leftSize, top + yOffset, top+yOffset+topSize)
   }
+
+  def mostConvinientNeighbourTo(u:model.Unit):Option[Zone] = {
+    if (neighbours.isEmpty) None
+    else Some(Zone.mostConvinient(neighbours)(u))
+  }
+
+}
+
+object Zone {
+  def mostConvinient(zones:List[Zone])(u:Unit) = zones.minBy(z => math.abs(u.angleTo(z.center._1, z.center._2)))
+
 }
 
 class MyStrategy extends Strategy {
   import MyStrategy._
   def move(self: Hockeyist, world: World, game: Game, move: Move) = {
-    println(activeHockeyists(world)(teammate).map(_.teammateIndex))
     val zones= hockeyistZones.get(self.id).toList.flatten
     val currentZone = detectZone(self)
     val updatedZones = zones match {
@@ -109,11 +202,12 @@ class MyStrategy extends Strategy {
     hockeyistZones.updated(self.id, updatedZones)
     zones.contains(upperZone)
 
-    if (self.teammateIndex == 0) {
-      if(globalUp.contains(world.puck))
-        moveBottom(self, move)
-      else moveUp(self, move)
-    } else {
+    /*if (self.teammateIndex == 1) {
+      defenceCenter(self, move, world)
+      /*if(globalUp.contains(world.puck))
+        moveBottom(self, move, world)
+      else moveUp(self, move, world)*/
+    } else {*/
 
       self.state match {
         case HockeyistState.Swinging => move.action = ActionType.Strike
@@ -128,12 +222,12 @@ class MyStrategy extends Strategy {
           } else if (getNearestTeammate(world.puck, world).map(_.id).contains(self.id)) {
             moveToPuck(self, world.puck, move)
           } else {
-            moveToPuck(self, world.puck, move)
+            //moveToPuck(self, world.puck, move)
 
-            //strikeNearestOpponent(self, world, game, move)
+            strikeNearestOpponent(self, world, game, move)
           }
       }
-    }
+    //}
   }
 
   private def strikeNearestOpponent(self: Hockeyist, world: World, game: Game, move: Move) {
@@ -155,30 +249,47 @@ class MyStrategy extends Strategy {
     move.action = ActionType.TakePuck
   }
 
-  def moveBottom(self: Hockeyist, move: Move) = {
-    if (defence1.contains(self)) {
-      move.speedUp = 1.0D
-      move.turn = self.angleTo(defence2.center._1, defence2.center._2)
-    } else if (defence2.contains(self)) {
+  def defenceCenter(self: Hockeyist, move: Move, w:World) = {
+    move.action = ActionType.TakePuck
+    val net = new Net(w.opponentPlayer.get, w)
+    val myDefence = defence(net.netAtLeft)
+    //println(defence(net.netAtLeft))
+    if (myDefence.contains(self)) {
+      move.speedUp = 0.0D
+      move.turn = self.angleTo(w.puck)
+    } else {
+      move.speedUp = 0.2D
+      move.turn = self.angleTo(myDefence.center._1, myDefence.center._2)
+    }
+  }
+  def moveBottom(self: Hockeyist, move: Move, w:World) = {
+    //println("to bottom")
+    if (defenceRightNet.contains(self)) {
       move.speedUp = 0.3D
       move.turn = self.angleTo(defence3.center._1, defence3.center._2)
     } else if (defence3.contains(self)) {
       move.speedUp = 0.0D
-      move.turn = self.angleTo(defence3.center._1, defence3.center._2)
+      move.turn = self.angleTo(w.puck)
+    } else {
+      move.speedUp = 0.9D
+      move.turn = self.angleTo(defenceRightNet.center._1, defenceRightNet.center._2)
     }
+    move.action = ActionType.TakePuck
 
   }
-  def moveUp(self: Hockeyist, move: Move) = {
-    if (defence3.contains(self)) {
-      move.speedUp = 1.0D
-      move.turn = self.angleTo(defence2.center._1, defence2.center._2)
-    } else if (defence2.contains(self)) {
+  def moveUp(self: Hockeyist, move: Move, w:World) = {
+    //println("to up")
+    if (defenceRightNet.contains(self)) {
       move.speedUp = 0.3D
       move.turn = self.angleTo(defence1.center._1, defence1.center._2)
     } else if (defence1.contains(self)) {
       move.speedUp = 0.0D
-      move.turn = self.angleTo(defence1.center._1, defence1.center._2)
+      move.turn = self.angleTo(w.puck)
+    } else {
+      move.speedUp = 0.9D
+      move.turn = self.angleTo(defenceRightNet.center._1, defenceRightNet.center._2)
     }
+    move.action = ActionType.TakePuck
   }
 
   val up = (0, -30)
@@ -216,67 +327,102 @@ class MyStrategy extends Strategy {
     }
   }
 
+  /*private def operateWithTarget(net:Net, target:(Double, Double), self: Hockeyist, world: World, game: Game, move: Move) = {
+    val angleToTarget = self.angleTo(target._1, target._2)
+    val turned = turnedToAttack(self, angleToTarget, net.oppositeNet)
+    if (leftTopStrikeable.containsCenter(self)) {
+      if (turned) {
+        move.turn = angleToTarget
+        if (math.abs(angleToTarget) < StrikeAngle) {
+          move.action = ActionType.Swing
+        }
+      } else {
 
+      }
+    }
+  }*/
 
+  def turnedToAttack(self: Hockeyist, angleToTarget:Double, myNet:Net) = {
+    math.abs(angleToTarget) < math.abs(self.angleTo(myNet.center._1, myNet.center._2))
+  }
   private def drivePuckToHook(self: Hockeyist, world: World, game: Game, move: Move) {
     val net = new Net(world.opponentPlayer.get, world)
-    val angle = self.angleTo(world.puck)
-    val nearbyenemies = opponentsInRadius(self.x, self.y, world, 80)
 
-    if (upperZone.containsCenter(self)) {
-      val angleToNet = self.angleTo(50, 560)
-      move.turn = angleToNet
-      if (math.abs(angleToNet) < StrikeAngle) {
-        move.action = ActionType.Swing
-      }
-    }/* else if (targetLowerZone.containsCenter(self)) {
-      val angleToNet = self.angleTo(50, 360)
-      move.turn = angleToNet
-      if (math.abs(angleToNet) < StrikeAngle) {
-        move.action = ActionType.Swing
-      }
-    }*/ else if (uZone2.containsCenter(self)){
-      moveToSubzone(self, move, uZone1)
-    } else if (uZone1.containsCenter(self)){
-      moveToSubzone(self, move, upperZone)
-    }/*else if (upperZone.contains(self)) {
+    val netAtLeft = net.netAtLeft
 
-      move.turn = self.angleTo(targetZone.center._1, targetZone.center._2)
-      move.action = ActionType.None
-      move.speedUp = 1.0
-    } */else {
-      //moveToSubzone(self, move, nearest(self, targetLowerZone::targetUpperZone::Nil))
-      moveToSubzone(self, move, uZone2)
+    if (globalUp(netAtLeft).containsCenter(self)) {//мы наверху
+      //println("up")
+      val target = net.targetBottom
+      val angleToTarget = self.angleTo(target._1, target._2)
+      val turned = turnedToAttack(self, angleToTarget, net.oppositeNet)
+      if (turned) {
+        //println("turned")
+        if (topStrikeable(netAtLeft).containsCenter(self)) {
+          //println("to strike")
+          move.turn = angleToTarget
+          if (math.abs(angleToTarget) < StrikeAngle) {
+            move.action = ActionType.Swing
+          }
+        } else if (topZoneStart(netAtLeft).containsCenter(self)) {
+          //println("at zone 2")
+          moveToSubzone(self, move, topZoneStart(netAtLeft).mostConvinientNeighbourTo(self).get)
+        } else if (topZoneMiddle(netAtLeft).containsCenter(self)) {
+          //println("at zone 1")
+          moveToSubzone(self, move, topZoneMiddle(netAtLeft).mostConvinientNeighbourTo(self).get)
+        } else {
+          //println("at top zone")
+          moveToSubzone(self, move, globalUp(netAtLeft).mostConvinientNeighbourTo(self).get)
+        }
+      } else {
+        //println("not turned")
+        moveToSubzone(self, move, Zone.mostConvinient(globalBottom(netAtLeft) :: topZoneStart(netAtLeft) :: Nil )(self))
+      }
+    } else { //мы внизу
+      //println("down")
+      val target = net.targetTop
+      val angleToTarget = self.angleTo(target._1, target._2)
+      val turned = turnedToAttack(self, angleToTarget, net.oppositeNet)
+
+      if (turned) {
+        //println("turned")
+        if (bottomStrikeable(netAtLeft).containsCenter(self)) {
+          move.turn = angleToTarget
+          if (math.abs(angleToTarget) < StrikeAngle) {
+            move.action = ActionType.Swing
+          }
+        } else if (bottomZoneStart(netAtLeft).containsCenter(self)) {
+          moveToSubzone(self, move, bottomZoneStart(netAtLeft).mostConvinientNeighbourTo(self).get)
+        } else if (bottomZoneMiddle(netAtLeft).containsCenter(self)) {
+          moveToSubzone(self, move, bottomZoneMiddle(netAtLeft).mostConvinientNeighbourTo(self).get)
+        } else {
+          moveToSubzone(self, move, globalBottom(netAtLeft).mostConvinientNeighbourTo(self).get)
+        }
+
+      } else {
+        //println("not turned")
+        moveToSubzone(self, move,  Zone.mostConvinient(globalUp(netAtLeft) :: bottomZoneStart(netAtLeft) :: Nil )(self))
+      }
+
     }
+    //println("")
+
   }
 
   def moveToSubzone(self: Hockeyist, move: Move, zone:Zone) = {
     moveTo(self, zone.center._1, zone.center._2, move)
   }
- /* private def drivePuckToHook2(self: Hockeyist, world: World, game: Game, move: Move) {
-    val net = new Net(world.opponentPlayer.get, world)
-    if (net.goalieAtMargin.getOrElse(true)) {
-      val angleToNet = self.angleTo(net.strikeableX, net.unguardedSide.getOrElse(net.top))
-      move.turn = angleToNet
-      if (math.abs(angleToNet) < StrikeAngle) {
-        move.action = ActionType.Swing
-      }
-    } else {
-      val angleToGuardedSide = self.angleTo(net.goalieLine + world.puck.radius*2, net.guardedSide.getOrElse(net.middleY))
-      move.turn = angleToGuardedSide
-      move.action = ActionType.None
-      move.speedUp = 1.0
-      //move to margin
-    }
-  }*/
 
   class Net(player:Player, world: World) extends Rectangle {
     def top:Double = player.netTop
     def bottom:Double = player.netBottom
     def left:Double = player.netLeft
     def right:Double = player.netRight
+    def targetBottom:(Double, Double) = if (netAtLeft) (right - 15, bottom)  else (left + 15, bottom)
+    def targetTop:(Double, Double) = if (netAtLeft) (right - 15, top)  else (left + 15, top)
 
-    val goalie:Option[Hockeyist] = playerGoalie(player, world)
+    def oppositeNet = world.players.collectFirst{case opponent if opponent.id != player.id => new Net(opponent, world)}.get
+
+    def goalie:Option[Hockeyist] = playerGoalie(player, world)
 
     def goalieAtTop = goalie.map(g => (g.y - g.radius) == top)
     def goalieAtBottom = goalie.map(g => (g.y + g.radius) == bottom)
