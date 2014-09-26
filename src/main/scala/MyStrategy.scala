@@ -1,5 +1,6 @@
 import model._
 
+import scala.annotation.tailrec
 import scala.collection.immutable.::
 
 object MyStrategy {
@@ -191,7 +192,48 @@ object Zone {
 
 class MyStrategy extends Strategy {
   import MyStrategy._
+  def position(h: Hockeyist, game:Game, t:Int = 1, acceleration:Double = 1):(Double, Double, Double, Double) = {
+    val yUp = math.sin(h.angle)*game.hockeyistSpeedUpFactor*acceleration
+    val xUp = math.cos(h.angle)*game.hockeyistSpeedUpFactor*acceleration
+
+    @tailrec
+    def nextPosition(x:Double, y:Double, speedX:Double, speedY:Double, t:Int):(Double, Double, Double, Double) = {
+      if (t == 0) (x, y, speedX, speedY)
+      else {
+        val nextSpeedX = 0.98*(speedX+xUp)
+        val nextSpeedY = 0.98*(speedY+yUp)
+
+        val nextX = x + nextSpeedX
+        val nextY = y + nextSpeedY
+        nextPosition(nextX, nextY, nextSpeedX, nextSpeedY, t - 1)
+      }
+    }
+    nextPosition(h.x, h.y, h.speedX, h.speedY, t)
+  }
+
+  val yLimit = 8.235
+
+  def puckSpeedModulo(h:Hockeyist, world:World, strikePower:Double = 0.75):(Double, Double) = {
+    val k = math.cos(h.angleTo(world.puck) - h.angularSpeed)
+    val power = 20*strikePower
+    (power + h.speedX*k, power + h.speedY*k)
+  }
+
+  def checkGoal(h:Hockeyist, world:World) = {
+    puckSpeedModulo(h, world)._2 > 8.235
+  }
+
+
   def move(self: Hockeyist, world: World, game: Game, move: Move) = {
+    //println(s"${world.puck.speedX}, ${world.puck.speedX}" )
+    if (self.teammateIndex == 1) {
+      //println(world.tick)
+      ///println(s"hockeyist(${self.x}, ${self.y}) with speed(${self.speedX}, ${self.speedY})")
+
+      //println(position(self, game, 10))
+      //println(position(self, game, 20))
+    }
+    //println()
     val zones= hockeyistZones.get(self.id).toList.flatten
     val currentZone = detectZone(self)
     val updatedZones = zones match {
@@ -210,34 +252,47 @@ class MyStrategy extends Strategy {
     } else {*/
 
       self.state match {
-        case HockeyistState.Swinging => move.action = ActionType.Strike
+        case HockeyistState.Swinging => println(puckSpeedModulo(self, world)); move.action = ActionType.Strike
         case _ =>
           if (world.puck.ownerPlayerId.contains(self.playerId)) {
             if (world.puck.ownerHockeyistId.contains(self.id)) {
               drivePuckToHook(self, world, game, move)
             } else {
               //moveToSubzone(self, move)
-              strikeNearestOpponent(self, world, game, move)
+              strikeNearestOpponent(self, world.puck, world, game, move)
             }
-          } else if (getNearestTeammate(world.puck, world).map(_.id).contains(self.id)) {
+          } else if (world.puck.ownerPlayerId == None/*getNearestTeammate(world.puck, world).map(_.id).contains(self.id)*/) {
             moveToPuck(self, world.puck, move)
           } else {
             //moveToPuck(self, world.puck, move)
-
-            strikeNearestOpponent(self, world, game, move)
+            strikePuck(self, world, move, game)
+            //strikeNearestOpponent(self, world.puck, world, game, move)
           }
       }
     //}
   }
 
-  private def strikeNearestOpponent(self: Hockeyist, world: World, game: Game, move: Move) {
-    for (nearestOpponent <- getNearestOpponent(self.x, self.y, world)) {
+  private def strikeNearestOpponent(self: Hockeyist, nearestTo:Unit, world: World, game: Game, move: Move) {
+    for (nearestOpponent <- getNearestOpponent(nearestTo.x, nearestTo.y, world)) {
       //println(nearestOpponent.teammate)
+      move.turn = self.angleTo(nearestOpponent)
       if (self.distanceTo(nearestOpponent) > game.stickLength) {
         move.speedUp = 1.0D
-        move.turn = self.angleTo(nearestOpponent)
+      } else {
+        println("enemy nearby")
+        if (math.abs(move.turn) < 0.5D * game.stickSector) {
+          move.action = ActionType.Strike
+        }
       }
-      if (math.abs(self.angleTo(nearestOpponent)) < 0.5D * game.stickSector) {
+    }
+  }
+
+  private def strikePuck(self:Hockeyist, world: World, move: Move, game: Game) = {
+    move.turn = self.angleTo(world.puck)
+    if (self.distanceTo(world.puck) > game.stickLength) {
+      move.speedUp = 1.0D
+    } else {
+      if (math.abs(move.turn) < 0.5D * game.stickSector) {
         move.action = ActionType.Strike
       }
     }
@@ -419,6 +474,12 @@ class MyStrategy extends Strategy {
     def right:Double = player.netRight
     def targetBottom:(Double, Double) = if (netAtLeft) (right - 15, bottom)  else (left + 15, bottom)
     def targetTop:(Double, Double) = if (netAtLeft) (right - 15, top)  else (left + 15, top)
+
+    def targetBottomG = goalie.map(g => (g.x, g.y + g.radius)).getOrElse(targetTopN)
+    def targetTopG = goalie.map(g => (g.x, g.y - g.radius)).getOrElse(targetBottomN)
+
+    def targetBottomN = if (netAtLeft)(right, bottom - 20) else (left, bottom - 20)
+    def targetTopN = if (netAtLeft)(right, bottom + 20) else (left, bottom + 20)
 
     def oppositeNet = world.players.collectFirst{case opponent if opponent.id != player.id => new Net(opponent, world)}.get
 
